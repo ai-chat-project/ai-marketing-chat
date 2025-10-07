@@ -1,0 +1,288 @@
+<iframe id="aiFrame" src="https://promethix.ai" loading="lazy" referrerpolicy="no-referrer"></iframe>
+<iframe src=https://ai-marketing-chat.vercel.app style="width:100%;height:80vh;border:0;border-radius:16px"></iframe>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NovaMark AI — Your 24/7 Marketing Co-Pilot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="AI marketing copilot that creates step-by-step strategies, ad copy, budgets, and growth plans for any business." />
+  <meta property="og:title" content="NovaMark AI — Your 24/7 Marketing Co-Pilot" />
+  <meta property="og:description" content="Launch campaigns, get ad copy, and growth plans in minutes — powered by AI." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://Promethix.ai.com/og.png" />
+  <link rel="icon" href="favicon.ico" />
+  <style>
+    :root{
+      --bg:#070b14; --panel:#0d1428; --soft:#111a33; --line:#1e2a4a;
+      --txt:#eef2ff; --muted:#a5b4d6; --brand:#6c7cff; --brand-2:#22d3ee; --ok:#22c55e; --warn:#fbbf24;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:radial-gradient(1200px 600px at 20% -10%, #13214a33, transparent), var(--bg); color:var(--txt); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:0 20px}
+    nav{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#070b1499,#070b1400);backdrop-filter:blur(8px);border-bottom:1px solid #ffffff12}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+    .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 0 40px #6c7cff55}
+    .nav-cta a{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0f1832,#0a1226);font-weight:600}
+    .nav-cta a.primary{border-color:#6c7cff55;background:linear-gradient(180deg,#5865f2,#4553e2);box-shadow:0 8px 24px #5865f244}
+
+    /* Hero */
+    .hero{padding:76px 0 40px; position:relative; overflow:hidden}
+    .grid-2{display:grid;grid-template-columns:1.2fr 1fr;gap:32px}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;border:1px solid #6c7cff44;background:#0b1220aa;font-size:12px}
+    .h1{font-size:40px;line-height:1.1;margin:14px 0 10px;font-weight:900;letter-spacing:-.02em}
+    .lead{font-size:16px;color:var(--muted);max-width:640px}
+    .hero-ctas{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#121a36,#0b1226);font-weight:700}
+    .btn.primary{border-color:#6c7cff77;background:linear-gradient(180deg,#6c7cff,#5563f2);box-shadow:0 10px 30px #6c7cff33}
+    .meta{font-size:12px;color:var(--muted);margin-top:10px}
+    .panel{background:linear-gradient(180deg,#0d1428,#0a1122);border:1px solid var(--line);border-radius:16px;padding:16px}
+    .hero-card{min-height:280px;display:grid;gap:10px}
+    .pill{font-size:12px;border:1px solid #2a3866;border-radius:999px;padding:6px 10px;display:inline-flex;gap:8px;align-items:center}
+    .list{display:grid;gap:10px;font-size:14px}
+    .li{display:flex;gap:10px;align-items:flex-start}
+    .li .dot{width:8px;height:8px;border-radius:50%;background:var(--brand-2);margin-top:6px;box-shadow:0 0 12px #22d3eeaa}
+
+    /* Logos */
+    .logos{opacity:.9;display:grid;grid-template-columns:repeat(6,1fr);gap:20px;align-items:center;margin:26px 0 40px}
+    .logo{height:28px;background:#0d1428;border:1px dashed #1e2a4a;border-radius:8px}
+
+    /* Sections */
+    section{padding:54px 0;border-top:1px solid #ffffff0f}
+    h2{font-size:28px;margin:0 0 8px}
+    .sub{color:var(--muted);max-width:720px;margin-bottom:22px}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .card{background:linear-gradient(180deg,#0e1530,#0b1326);border:1px solid var(--line);border-radius:16px;padding:18px}
+    .card h3{margin:6px 0 8px}
+    .kpi{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+    .stepz{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .step{background:#0c142b;border:1px solid var(--line);border-radius:16px;padding:16px}
+    .pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .price-card{background:linear-gradient(180deg,#0e1530,#0b1326);border:1px solid var(--line);border-radius:18px;padding:20px;position:relative}
+    .price{font-size:36px;font-weight:900;margin:6px 0}
+    .tag{position:absolute;top:12px;right:12px;font-size:12px;border:1px solid #6c7cff66;border-radius:999px;padding:4px 8px;background:#111a33}
+    .ul{display:grid;gap:10px;margin:12px 0}
+    .ul .ok{color:var(--ok)} .ul .no{color:#ef4444}
+    .cta-wide{display:flex;gap:12px;flex-wrap:wrap}
+    .faq{display:grid;gap:10px}
+    details{background:#0c142b;border:1px solid var(--line);border-radius:12px;padding:14px}
+    summary{cursor:pointer;font-weight:700}
+
+    /* Footer */
+    footer{padding:24px 0;color:var(--muted)}
+    .foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+    /* Bubble */
+    #aiBubble{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#5865f2,#4654e2);color:#fff;display:flex;align-items:center;justify-content:center;font:600 16px/1 system-ui;border:none;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.35);z-index:9999}
+    #aiModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9998}
+    #aiDialog{width:min(960px,96vw);height:min(82vh,920px);background:#0b1220;border-radius:16px;overflow:hidden;border:1px solid #1e2a4a}
+    #aiDialog header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#11192e;color:#f4f6fb}
+    #aiDialog iframe{width:100%;height:calc(100% - 48px);border:0}
+    #aiClose{background:transparent;border:0;color:#fff;font-size:20px;cursor:pointer}
+
+    /* Responsive */
+    @media (max-width:1000px){
+      .grid-2{grid-template-columns:1fr}
+      .features{grid-template-columns:1fr 1fr}
+      .stepz{grid-template-columns:1fr 1fr}
+      .pricing{grid-template-columns:1fr}
+      .logos{grid-template-columns:repeat(3,1fr)}
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="container nav-inner">
+      <div class="brand"><div class="logo"></div> NovaMark AI</div>
+      <div class="nav-cta">
+        <a href="#pricing">Pricing</a>
+        <a class="primary" href="#try">Try Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container grid-2">
+      <div>
+        <div class="badge">⚡ Launch campaigns 10× faster</div>
+        <h1 class="h1">Your 24/7 AI Marketing Co-Pilot</h1>
+        <p class="lead">Get ready-to-run strategies, ad copy, budgets, emails, and growth plans — tailored to your business in minutes.</p>
+        <div class="hero-ctas">
+          <a class="btn primary" href="#try">Start Free Chat</a>
+          <a class="btn" href="#how">See how it works</a>
+        </div>
+        <div class="meta">No installation · No credit card for basic chat · Upgrade any time</div>
+      </div>
+      <div class="panel hero-card">
+        <div class="pill">✅ Strategy builder</div>
+        <div class="pill">💬 Ad copy + hooks</div>
+        <div class="pill">📅 7-day content plan</div>
+        <div class="list">
+          <div class="li"><div class="dot"></div>Get step-by-step playbooks for Meta/Google/TikTok.</div>
+          <div class="li"><div class="dot"></div>Auto-generate 3× variants per ad with CTAs.</div>
+          <div class="li"><div class="dot"></div>Budget split with KPIs and next actions.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="logos">
+        <div class="logo"></div><div class="logo"></div><div class="logo"></div>
+        <div class="logo"></div><div class="logo"></div><div class="logo"></div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="container">
+      <h2>Why teams use NovaMark</h2>
+      <p class="sub">From solo founders to enterprise teams — ship campaigns faster with AI guidance that’s concrete, measurable, and on-brand.</p>
+      <div class="features">
+        <div class="card">
+          <h3>Actionable strategy</h3>
+          <p>Step-by-step plans with timing, channels, and KPIs.</p>
+          <div class="kpi">📈 Typical time saved: 6–8 hrs/week</div>
+        </div>
+        <div class="card">
+          <h3>Ad copy that converts</h3>
+          <p>Headlines, bodies, hooks and CTAs for Meta/Google/TikTok.</p>
+          <div class="kpi">🧪 3–5 variants per brief</div>
+        </div>
+        <div class="card">
+          <h3>Content calendar</h3>
+          <p>7-day posting plan with captions & prompts.</p>
+          <div class="kpi">📅 Export-ready</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="container">
+      <h2>How it works</h2>
+      <p class="sub">Three steps from idea to launch.</p>
+      <div class="stepz">
+        <div class="step"><b>1. Brief</b><br/>Tell the AI your product, audience, and goal.</div>
+        <div class="step"><b>2. Plan</b><br/>Get strategy, messaging, and ad ideas instantly.</div>
+        <div class="step"><b>3. Build</b><br/>Generate copy, emails, and 7-day calendar.</div>
+        <div class="step"><b>4. Iterate</b><br/>Refine with data and A/B variants.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="container">
+      <h2>Pricing</h2>
+      <p class="sub">Choose the plan that fits your needs. Upgrade or cancel anytime.</p>
+      <div class="pricing">
+        <div class="price-card">
+          <span class="tag">Starter</span>
+          <div class="price">$9<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="ul">
+            <div class="ok">✓ Basic strategy & 3 ad ideas</div>
+            <div class="ok">✓ 7-day content outline</div>
+            <div class="no">— No file analysis</div>
+          </div>
+          <a class="btn primary" href="#try">Start</a>
+        </div>
+        <div class="price-card" style="border-color:#6c7cff99;box-shadow:0 10px 40px #6c7cff22">
+          <span class="tag">Pro • Most Popular</span>
+          <div class="price">$29<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="ul">
+            <div class="ok">✓ Full strategy + KPIs</div>
+            <div class="ok">✓ 9 ad variants + CTAs</div>
+            <div class="ok">✓ Exportable 7-day calendar</div>
+            <div class="no">— No team seats</div>
+          </div>
+          <a class="btn primary" href="#try">Go Pro</a>
+        </div>
+        <div class="price-card">
+          <span class="tag">Premium</span>
+          <div class="price">$79<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="ul">
+            <div class="ok">✓ Everything in Pro</div>
+            <div class="ok">✓ File/CSV analysis</div>
+            <div class="ok">✓ Priority responses</div>
+            <div class="ok">✓ 3 team seats</div>
+          </div>
+          <a class="btn primary" href="#try">Upgrade</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="social-proof">
+    <div class="container">
+      <h2>Loved by marketers</h2>
+      <p class="sub">“I shipped a week of content and 6 ad variants in one afternoon.” — A. Dimitriou</p>
+      <div class="card">“Clear KPIs and budget split. Feels like a senior strategist on demand.” — M. Papadakis</div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="container">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <details><summary>How do I try it?</summary><p>Click “Start Free Chat” to open the AI inside a modal. No install needed.</p></details>
+        <details><summary>Which channels are supported?</summary><p>Meta, Google, TikTok, email, and organic content guidance.</p></details>
+        <details><summary>Can I switch plans?</summary><p>Yes, upgrade/downgrade anytime. Changes apply immediately.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="try">
+    <div class="container">
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <h2>Ready to launch faster?</h2>
+          <p class="sub">Open the AI and build your next campaign in minutes.</p>
+        </div>
+        <a class="btn primary" href="javascript:void(0)" onclick="openChat()">Open AI Chat</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container foot">
+      <div>© <span id="y"></span> NovaMark AI • All rights reserved</div>
+      <div>
+        <a href="#pricing">Pricing</a> •
+        <a href="#faq">FAQ</a> •
+        <a href="mailto:hello@yourdomain.com">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating bubble + modal -->
+  <button id="aiBubble">💬</button>
+  <div id="aiModal">
+    <div id="aiDialog">
+      <header>
+        <div>AI Marketing Advisor</div>
+        <button id="aiClose">×</button>
+      </header>
+      <!-- CHANGE THIS URL BELOW -->
+      <iframe id="aiFrame" src=https://ai-marketing-chat.vercel.app loading="lazy" referrerpolicy="no-referrer"></iframe>
+    </div>
+  </div>
+
+<script>
+  // footer year
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  // bubble/modal logic
+  const b=document.getElementById('aiBubble'), m=document.getElementById('aiModal'), x=document.getElementById('aiClose');
+  function openChat(){ m.style.display='flex'; }
+  b.addEventListener('click',openChat);
+  x.addEventListener('click',()=>m.style.display='none');
+  m.addEventListener('click',e=>{ if(e.target===m) m.style.display='none'; });
+
+  // OPTIONAL: set chat URL via query (?chat=...)
+  const q=new URLSearchParams(location.search).get('chat');
+  if(q){ document.getElementById('aiFrame').src = q; }
+</script>
+</body>
+</html>
