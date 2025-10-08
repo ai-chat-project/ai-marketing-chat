@@ -85,6 +85,79 @@
     }
   </style>
 </head>
+   <script>
+  // ===== ΡΥΘΜΙΣΕΙΣ ΠΛΗΡΩΜΩΝ (Stripe) =====
+  const PRICE_IDS = {
+    starter:  'price_xxxSTARTER',  // ← βάλε τα δικά σου
+    pro:      'price_xxxPRO',
+    premium:  'price_xxxPREMIUM'
+  };
+
+  async function startCheckout(plan){
+    try{
+      const r = await fetch('/api/create-checkout', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ plan }) // ο server χαρτογραφεί plan -> priceId
+      });
+      const { url, error } = await r.json();
+      if (url) { location.href = url; }
+      else { alert('Checkout error: ' + (error || 'unknown')); }
+    }catch(e){ alert('Network error'); }
+  }
+
+  async function startTrial(){
+    // αν ο server κάνει trial μόνο στο pro, στείλε plan='pro'
+    return startCheckout('pro');
+  }
+
+  // ===== ΓΕΝΙΚΟΣ ROUTER ΓΙΑ ΚΛΙΚ =====
+  function handleActionClick(e){
+    const el = e.currentTarget;
+    const action = el.dataset.action;      // 'trial' | 'checkout' | 'link' | 'scroll'
+    const plan   = el.dataset.plan;        // 'starter' | 'pro' | 'premium'
+    const url    = el.dataset.url;         // οποιοδήποτε http(s) link
+    const target = el.dataset.target || ''; // '_blank' για νέο tab
+    const smooth = el.dataset.smooth === 'true';
+
+    e.preventDefault();
+
+    switch(action){
+      case 'trial':
+        startTrial();
+        break;
+
+      case 'checkout':
+        if (!plan) return console.warn('Missing data-plan');
+        startCheckout(plan);
+        break;
+
+      case 'link':
+        if (!url) return;
+        if (target === '_blank') window.open(url, '_blank', 'noopener');
+        else location.href = url;
+        break;
+
+      case 'scroll':
+        if (!url) return;
+        const id = url.startsWith('#') ? url : '#' + url;
+        const node = document.querySelector(id);
+        if (node) node.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+        break;
+
+      default:
+        console.warn('Unknown action:', action);
+    }
+  }
+
+  // Attach αυτόματα σε όλα τα στοιχεία με .js-action
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.js-action').forEach(btn => {
+      btn.addEventListener('click', handleActionClick);
+    });
+  });
+</script>
+
 <body>
   <nav>
     <div class="container nav-inner">
@@ -414,3 +487,87 @@ export default async function handler(req, res) {
 
   res.json({ received: true });
 }
+<a class="btn primary js-action"
+   data-action="trial"
+   href="#">
+  Start Free (7 days)
+</a>
+<!-- Starter -->
+<a class="btn primary js-action"
+   data-action="checkout"
+   data-plan="starter"
+   href="#">
+  Choose Starter
+</a>
+
+<!-- Pro -->
+<a class="btn primary js-action"
+   data-action="checkout"
+   data-plan="pro"
+   href="#">
+  Go Pro
+</a>
+
+<!-- Premium -->
+<a class="btn primary js-action"
+   data-action="checkout"
+   data-plan="premium"
+   href="#">
+  Upgrade
+</a>
+<!-- ίδιο tab -->
+<a class="btn js-action"
+   data-action="link"
+   data-url="https://novamark.ai/blog/best-practices"
+   href="#">
+  Blog
+</a>
+
+<!-- νέο tab -->
+<a class="btn js-action"
+   data-action="link"
+   data-url="https://dash.stripe.com"
+   data-target="_blank"
+   href="#">
+  Billing Portal
+</a>
+<a class="btn js-action"
+   data-action="scroll"
+   data-url="#pricing"
+   data-smooth="true"
+   href="#pricing">
+  See Pricing
+</a>
+// /api/create-checkout.js
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const PRICE_IDS = {
+  starter:  'price_xxxSTARTER',
+  pro:      'price_xxxPRO',
+  premium:  'price_xxxPREMIUM'
+};
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { plan } = req.body || {};
+  const priceId = PRICE_IDS[plan];
+  if (!priceId) return res.status(400).json({ error: 'Unknown plan' });
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
+    subscription_data: { trial_period_days: plan === 'pro' ? 7 : undefined },
+    allow_promotion_codes: true
+  });
+
+  res.status(200).json({ url: session.url });
+}
+<a class="btn js-action"
+   data-action="link"
+   data-url="https://novamark.ai/pricing?utm_source=hero_btn"
+   href="#">
+  Pricing
+</a>
