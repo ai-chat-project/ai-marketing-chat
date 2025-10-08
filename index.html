@@ -1,87 +1,199 @@
-<!-- 💬 Floating chat bubble -->
-<button id="aiBubble" aria-controls="aiModal" aria-expanded="false" aria-label="Open AI chat">💬</button>
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8" />
+  <title>NovaMark AI — Demo με Προστατευμένο Chat</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="AI marketing copilot demo με έλεγχο πρόσβασης." />
+  <style>
+    /* ====== Demo page styling (προαιρετικό) ====== */
+    :root{
+      --bg:#070b14; --panel:#0d1428; --line:#1e2a4a; --txt:#eef2ff; --muted:#a5b4d6;
+      --brand:#6c7cff; --brand2:#22d3ee;
+    }
+    html,body{margin:0;padding:0;background:radial-gradient(1200px 600px at 20% -10%, #13214a33, transparent), var(--bg); color:var(--txt); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    h1{margin:10px 0 6px;font-size:34px}
+    p.lead{color:var(--muted);max-width:720px}
+    .panel{background:linear-gradient(180deg,#0d1428,#0a1122);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
 
-<!-- 🪟 Chat modal -->
-<div id="aiModal" role="dialog" aria-modal="true" aria-labelledby="aiDialogTitle" style="display:none">
-  <div id="aiDialog">
-    <header>
-      <div id="aiDialogTitle">AI Marketing Advisor</div>
-      <button id="aiClose" aria-label="Close chat">×</button>
-    </header>
+    /* ====== Bubble & Modal styles ====== */
+    #aiBubble{
+      position:fixed; right:20px; bottom:20px;
+      width:56px; height:56px; border-radius:50%;
+      background:linear-gradient(135deg,#5865f2,#4654e2);
+      color:#fff; font:600 18px/1 system-ui; border:0; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 10px 20px rgba(0,0,0,.35); z-index:9999;
+    }
+    #aiBubble:focus{ outline:2px solid #fff8; outline-offset:2px; }
 
-    <!-- ✅ Σωστό iframe με το domain σου -->
-    <iframe
-      id="aiFrame"
-      src="https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/"
-      loading="lazy"
-      referrerpolicy="no-referrer"
-      title="AI Marketing Chat"
-      style="width:100%;height:calc(100% - 48px);border:0;display:block"
-      allow="clipboard-write; microphone; camera"
-      sandbox="allow-scripts allow-same-origin allow-popups allow-forms">
-    </iframe>
+    #aiModal{
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:none; align-items:center; justify-content:center; z-index:9998;
+    }
+    #aiDialog{
+      width:min(960px,96vw); height:min(82vh,920px);
+      background:#0b1220; border-radius:16px; overflow:hidden;
+      border:1px solid #1e2a4a; display:flex; flex-direction:column;
+    }
+    #aiDialog header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; background:#11192e; color:#f4f6fb;
+    }
+    #aiClose{ background:transparent; border:0; color:#fff; font-size:22px; cursor:pointer; }
+    .ai-body{ flex:1; min-height:360px; position:relative; }
+    .loading{ display:flex; align-items:center; justify-content:center; height:100%; color:#a5b4d6; }
+
+    .paywall{ padding:24px; color:#eef2ff; }
+    .paywall h3{ margin:0 0 8px; }
+    .pw-ctas{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:12px; border:1px solid #1e2a4a;
+      background:linear-gradient(180deg,#121a36,#0b1226); color:#eef2ff; font-weight:700; cursor:pointer;
+      text-decoration:none;
+    }
+    .btn.primary{
+      border-color:#6c7cff77;
+      background:linear-gradient(180deg,#6c7cff,#5563f2);
+      box-shadow:0 10px 30px rgba(108,124,255,.25);
+    }
+
+    @media (prefers-reduced-motion:no-preference){
+      #aiModal{ animation:fadeIn .15s ease-out; }
+      @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+    }
+  </style>
+</head>
+<body>
+  <!-- ====== Περιεχόμενο σελίδας (δικό σου) ====== -->
+  <div class="container">
+    <h1>NovaMark AI — Your 24/7 Marketing Co-Pilot</h1>
+    <p class="lead">Δείγμα σελίδας. Πάτησε το 💬 κάτω δεξιά για τον AI βοηθό. Αν δεν έχεις πρόσβαση, θα εμφανιστεί paywall.</p>
+    <div class="panel">
+      <strong>Tip:</strong> Μπορείς να επιλέξεις κείμενο στη σελίδα και μετά να πατήσεις το 💬 — το επιλεγμένο κείμενο περνάει σαν context στο chat.
+    </div>
   </div>
-</div>
 
-<script>
-  (function(){
-    const bubble = document.getElementById('aiBubble');
-    const modal  = document.getElementById('aiModal');
-    const dialog = document.getElementById('aiDialog');
-    const close  = document.getElementById('aiClose');
+  <!-- 💬 Floating chat bubble -->
+  <button id="aiBubble" aria-controls="aiModal" aria-expanded="false" aria-label="Open AI helper">💬</button>
 
-    function openChat(){
-      modal.style.display = 'flex';
-      bubble.setAttribute('aria-expanded','true');
-      // focus για προσβασιμότητα
-      close.focus({preventScroll:true});
-      // προαιρετικά: αλλάζεις src μέσω query (?chat=...)
-      const q = new URLSearchParams(location.search).get('chat');
-      if (q) document.getElementById('aiFrame').src = q;
-    }
-    function closeChat(){
-      modal.style.display = 'none';
-      bubble.setAttribute('aria-expanded','false');
-      bubble.focus({preventScroll:true});
-    }
+  <!-- 🪟 Chat modal -->
+  <div id="aiModal" role="dialog" aria-modal="true" aria-labelledby="aiDialogTitle" style="display:none">
+    <div id="aiDialog">
+      <header>
+        <div id="aiDialogTitle">AI Marketing Advisor</div>
+        <button id="aiClose" aria-label="Close chat">×</button>
+      </header>
+      <div id="aiBody" class="ai-body"><div class="loading">Φόρτωση…</div></div>
+    </div>
+  </div>
 
-    bubble.addEventListener('click', openChat);
-    close.addEventListener('click', closeChat);
-    modal.addEventListener('click', e => { if (e.target === modal) closeChat(); });
-    // Esc για κλείσιμο
-    window.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display === 'flex') closeChat(); });
-  })();
-</script>
+  <script>
+    (function(){
+      // ====== ΡΥΘΜΙΣΕΙΣ ======
+      // 1) To δικό σου hosted chat (Vercel app σου). Μπορείς να βάλεις και production domain.
+      const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/';
+      // 2) Endpoint για έλεγχο πρόσβασης (πρέπει να επιστρέφει JSON: { hasAccess: true|false })
+      const CHECK_ACCESS_ENDPOINT = '/api/check-access';
 
-<style>
-  /* Bubble */
-  #aiBubble{
-    position:fixed; right:20px; bottom:20px;
-    width:56px; height:56px; border-radius:50%;
-    background:linear-gradient(135deg,#5865f2,#4654e2);
-    color:#fff; font:600 18px/1 system-ui; border:0; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 10px 20px rgba(0,0,0,.35); z-index:9999;
-  }
-  #aiBubble:focus{ outline:2px solid #fff8; outline-offset:2px; }
+      // Δυνατότητα override από URL (?chat=https://…)
+      const urlOverride = new URLSearchParams(location.search).get('chat');
+      const CHAT_URL = urlOverride || CHAT_BASE_URL;
 
-  /* Modal */
-  #aiModal{
-    position:fixed; inset:0; background:rgba(0,0,0,.5);
-    align-items:center; justify-content:center; z-index:9998;
-  }
-  #aiDialog{
-    width:min(960px,96vw); height:min(82vh,920px);
-    background:#0b1220; border-radius:16px; overflow:hidden;
-    border:1px solid #1e2a4a; display:flex; flex-direction:column;
-  }
-  #aiDialog header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 14px; background:#11192e; color:#f4f6fb;
-  }
-  #aiClose{ background:transparent; border:0; color:#fff; font-size:22px; cursor:pointer; }
-  @media (prefers-reduced-motion:no-preference){
-    #aiModal{ animation:fadeIn .15s ease-out; }
-    @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
-  }
-</style>
+      // ====== Συλλογή context από τη σελίδα ======
+      function getPageContext(){
+        const title = document.title || '';
+        const href  = location.href;
+        const meta  = document.querySelector('meta[name="description"]');
+        const description = meta ? meta.content : '';
+        const selection = (window.getSelection && String(window.getSelection())) || '';
+        const h1 = (document.querySelector('h1') && document.querySelector('h1').innerText) || '';
+        return { title, href, description, selection, h1, ts: Date.now() };
+      }
+      function encodeContext(ctx){
+        try { return btoa(unescape(encodeURIComponent(JSON.stringify(ctx)))); }
+        catch { return ''; }
+      }
+
+      // ====== Access check ======
+      async function userHasAccess(){
+        try{
+          const resp = await fetch(CHECK_ACCESS_ENDPOINT, { credentials: 'include' });
+          if(!resp.ok) return false;
+          const data = await resp.json();
+          return !!data.hasAccess;
+        }catch{ return false; }
+      }
+
+      // ====== Renderers ======
+      function renderIframe(container, src){
+        const iframe = document.createElement('iframe');
+        iframe.id = 'aiFrame';
+        iframe.src = src;
+        iframe.loading = 'lazy';
+        iframe.referrerPolicy = 'no-referrer';
+        iframe.title = 'AI Marketing Chat';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = '0';
+        iframe.setAttribute('allow', 'clipboard-write; microphone; camera');
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
+        container.innerHTML = '';
+        container.appendChild(iframe);
+      }
+      function renderPaywall(container){
+        container.innerHTML = `
+          <div class="paywall">
+            <h3>Πρόσβαση Premium</h3>
+            <p>Για να χρησιμοποιήσεις τον AI βοηθό, χρειάζεται ενεργή συνδρομή.</p>
+            <div class="pw-ctas">
+              <a class="btn primary" href="/pricing">Απόκτησε πρόσβαση</a>
+              <button class="btn" id="retryAccess">Έχω ήδη πρόσβαση</button>
+            </div>
+          </div>
+        `;
+        const retry = container.querySelector('#retryAccess');
+        if (retry) retry.addEventListener('click', initChatBody);
+      }
+
+      async function initChatBody(){
+        const container = document.getElementById('aiBody');
+        container.innerHTML = '<div class="loading">Έλεγχος πρόσβασης…</div>';
+        const has = await userHasAccess();
+        if(!has){ renderPaywall(container); return; }
+        const ctx = getPageContext();
+        const encoded = encodeContext(ctx);
+        const glue = CHAT_URL.includes('?') ? '&' : '?';
+        const src = `${CHAT_URL}${glue}context=${encoded}`;
+        renderIframe(container, src);
+      }
+
+      // ====== Άνοιγμα/κλείσιμο modal ======
+      const bubble = document.getElementById('aiBubble');
+      const modal  = document.getElementById('aiModal');
+      const close  = document.getElementById('aiClose');
+
+      function openChat(){
+        modal.style.display = 'flex';
+        bubble.setAttribute('aria-expanded','true');
+        close.focus({preventScroll:true});
+        initChatBody();
+      }
+      function closeChat(){
+        modal.style.display = 'none';
+        bubble.setAttribute('aria-expanded','false');
+        bubble.focus({preventScroll:true});
+      }
+
+      bubble.addEventListener('click', openChat);
+      close.addEventListener('click', closeChat);
+      modal.addEventListener('click', e => { if (e.target === modal) closeChat(); });
+      window.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display === 'flex') closeChat(); });
+    })();
+  </script>
+
+  <noscript>Ενεργοποίησε JavaScript για να χρησιμοποιήσεις τον AI βοηθό.</noscript>
+</body>
+</html>
