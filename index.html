@@ -1,16 +1,10 @@
-/
-├─ index.html
-└─ api/
-   ├─ check-access.js
-   ├─ create-checkout.js
-   └─ stripe-webhook.js
 <!doctype html>
-<html lang="el">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>NovaMark AI — Your 24/7 Marketing Co-Pilot</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="AI marketing advisor που φτιάχνει στρατηγικές, ad copy, budgets και growth plans σε λεπτά." />
+  <meta name="description" content="AI marketing advisor that builds strategies, ad copy, budgets, and growth plans in minutes." />
   <link rel="icon" href="favicon.ico" />
   <style>
     :root{
@@ -22,7 +16,6 @@
     a{color:inherit;text-decoration:none}
     .container{max-width:1200px;margin:0 auto;padding:0 20px}
 
-    /* Nav */
     nav{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#070b1499,#070b1400);backdrop-filter:blur(8px);border-bottom:1px solid #ffffff12}
     .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
@@ -30,7 +23,6 @@
     .nav-cta a{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0f1832,#0a1226);font-weight:600}
     .nav-cta a.primary{border-color:#6c7cff55;background:linear-gradient(180deg,#5865f2,#4553e2);box-shadow:0 8px 24px #5865f244}
 
-    /* Hero */
     .hero{padding:76px 0 40px}
     .grid-2{display:grid;grid-template-columns:1.2fr 1fr;gap:32px}
     .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;border:1px solid #6c7cff44;background:#0b1220aa;font-size:12px}
@@ -47,7 +39,6 @@
     .li{display:flex;gap:10px;align-items:flex-start}
     .li .dot{width:8px;height:8px;border-radius:50%;background:var(--brand-2);margin-top:6px;box-shadow:0 0 12px #22d3eeaa}
 
-    /* Sections */
     section{padding:54px 0;border-top:1px solid #ffffff0f}
     h2{font-size:28px;margin:0 0 8px}
     .sub{color:var(--muted);max-width:720px;margin-bottom:22px}
@@ -60,14 +51,12 @@
     .ul{display:grid;gap:10px;margin:12px 0}
     .ul .ok{color:var(--ok)} .ul .no{color:#ef4444}
     .faq{display:grid;gap:10px}
-    details{background:#0c142b;border:1px solid var(--line);border-radius:12px;padding:14px}
+    details{background:#0c142b;border:1px solid #1e2a4a;border-radius:12px;padding:14px}
     summary{cursor:pointer;font-weight:700}
 
-    /* Footer */
     footer{padding:24px 0;color:var(--muted)}
     .foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 
-    /* Bubble + Modal */
     #aiBubble{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#5865f2,#4654e2);color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px/1 system-ui;border:none;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.35);z-index:9999}
     #aiBubble:focus{outline:2px solid #fff8;outline-offset:2px}
     #aiModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9998}
@@ -77,7 +66,6 @@
     .ai-body{flex:1;min-height:360px;position:relative}
     .loading{display:flex;align-items:center;justify-content:center;height:100%;color:#a5b4d6}
 
-    /* Responsive */
     @media (max-width:1000px){
       .grid-2{grid-template-columns:1fr}
       .features{grid-template-columns:1fr 1fr}
@@ -85,86 +73,13 @@
     }
   </style>
 </head>
-   <script>
-  // ===== ΡΥΘΜΙΣΕΙΣ ΠΛΗΡΩΜΩΝ (Stripe) =====
-  const PRICE_IDS = {
-    starter:  'price_xxxSTARTER',  // ← βάλε τα δικά σου
-    pro:      'price_xxxPRO',
-    premium:  'price_xxxPREMIUM'
-  };
-
-  async function startCheckout(plan){
-    try{
-      const r = await fetch('/api/create-checkout', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ plan }) // ο server χαρτογραφεί plan -> priceId
-      });
-      const { url, error } = await r.json();
-      if (url) { location.href = url; }
-      else { alert('Checkout error: ' + (error || 'unknown')); }
-    }catch(e){ alert('Network error'); }
-  }
-
-  async function startTrial(){
-    // αν ο server κάνει trial μόνο στο pro, στείλε plan='pro'
-    return startCheckout('pro');
-  }
-
-  // ===== ΓΕΝΙΚΟΣ ROUTER ΓΙΑ ΚΛΙΚ =====
-  function handleActionClick(e){
-    const el = e.currentTarget;
-    const action = el.dataset.action;      // 'trial' | 'checkout' | 'link' | 'scroll'
-    const plan   = el.dataset.plan;        // 'starter' | 'pro' | 'premium'
-    const url    = el.dataset.url;         // οποιοδήποτε http(s) link
-    const target = el.dataset.target || ''; // '_blank' για νέο tab
-    const smooth = el.dataset.smooth === 'true';
-
-    e.preventDefault();
-
-    switch(action){
-      case 'trial':
-        startTrial();
-        break;
-
-      case 'checkout':
-        if (!plan) return console.warn('Missing data-plan');
-        startCheckout(plan);
-        break;
-
-      case 'link':
-        if (!url) return;
-        if (target === '_blank') window.open(url, '_blank', 'noopener');
-        else location.href = url;
-        break;
-
-      case 'scroll':
-        if (!url) return;
-        const id = url.startsWith('#') ? url : '#' + url;
-        const node = document.querySelector(id);
-        if (node) node.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
-        break;
-
-      default:
-        console.warn('Unknown action:', action);
-    }
-  }
-
-  // Attach αυτόματα σε όλα τα στοιχεία με .js-action
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.js-action').forEach(btn => {
-      btn.addEventListener('click', handleActionClick);
-    });
-  });
-</script>
-
 <body>
   <nav>
     <div class="container nav-inner">
       <div class="brand"><div class="logo"></div> NovaMark AI</div>
       <div class="nav-cta">
         <a href="#pricing">Pricing</a>
-        <a class="primary" href="#" onclick="startTrial()" rel="nofollow">Try Free</a>
+        <a class="primary js-action" data-action="trial" href="#">Try Free</a>
       </div>
     </div>
   </nav>
@@ -174,20 +89,20 @@
       <div>
         <div class="badge">⚡ Launch campaigns 10× faster</div>
         <h1 class="h1">Your 24/7 AI Marketing Co-Pilot</h1>
-        <p class="lead">Πάρε στρατηγική, ad copy, budget split, emails και growth plan — προσαρμοσμένα στην επιχείρησή σου σε λίγα λεπτά.</p>
+        <p class="lead">Get strategy, ad copy, budget split, emails, and a 7-day content plan — tailored to your business.</p>
         <div class="hero-ctas">
-          <a class="btn primary" href="#" onclick="startTrial()" rel="nofollow">Start Free (7 days)</a>
-          <a class="btn" href="#how">See how it works</a>
+          <a class="btn primary js-action" data-action="trial" href="#">Start Free (7 days)</a>
+          <a class="btn js-action" data-action="scroll" data-url="#how" data-smooth="true" href="#how">See how it works</a>
         </div>
-        <div class="meta">Card required for free trial · Cancel anytime</div>
+        <div class="meta">Card required · Cancel anytime</div>
       </div>
       <div class="panel hero-card">
         <div class="pill">✅ Strategy builder</div>
         <div class="pill">💬 Ad copy + hooks</div>
         <div class="pill">📅 7-day content plan</div>
         <div class="list">
-          <div class="li"><div class="dot"></div>Playbooks για Meta/Google/TikTok.</div>
-          <div class="li"><div class="dot"></div>3× ad variants με CTAs.</div>
+          <div class="li"><div class="dot"></div>Playbooks for Meta / Google / TikTok.</div>
+          <div class="li"><div class="dot"></div>3× ad variants with CTAs.</div>
           <div class="li"><div class="dot"></div>Budget split, KPIs, next actions.</div>
         </div>
       </div>
@@ -197,11 +112,11 @@
   <section id="features">
     <div class="container">
       <h2>Why teams use NovaMark</h2>
-      <p class="sub">Από solo founders έως enterprise — στείλε καμπάνιες πιο γρήγορα με AI καθοδήγηση που είναι συγκεκριμένη και μετρήσιμη.</p>
+      <p class="sub">From solo founders to enterprise — ship campaigns faster with concrete, measurable AI guidance.</p>
       <div class="features">
-        <div class="card"><h3>Actionable strategy</h3><p>Βήματα με timing, κανάλια και KPIs.</p></div>
-        <div class="card"><h3>Ad copy που μετατρέπει</h3><p>Headlines, bodies, hooks & CTAs για Meta/Google/TikTok.</p></div>
-        <div class="card"><h3>Content calendar</h3><p>7-day πλάνο με captions & prompts.</p></div>
+        <div class="card"><h3>Actionable strategy</h3><p>Step-by-step plans with timing, channels, and KPIs.</p></div>
+        <div class="card"><h3>Ad copy that converts</h3><p>Headlines, hooks & CTAs for Meta / Google / TikTok.</p></div>
+        <div class="card"><h3>Content calendar</h3><p>7-day posting plan with captions & prompts.</p></div>
       </div>
     </div>
   </section>
@@ -209,12 +124,12 @@
   <section id="how">
     <div class="container">
       <h2>How it works</h2>
-      <p class="sub">Τρία βήματα από ιδέα σε launch.</p>
+      <p class="sub">Three steps from idea to launch.</p>
       <div class="features" style="grid-template-columns:repeat(4,1fr)">
-        <div class="card"><b>1. Brief</b><br/>Πες προϊόν, κοινό, στόχο.</div>
-        <div class="card"><b>2. Plan</b><br/>Στρατηγική, messaging, ιδέες ads.</div>
-        <div class="card"><b>3. Build</b><br/>Copy, emails, 7-day calendar.</div>
-        <div class="card"><b>4. Iterate</b><br/>Βελτίωση με data & A/B.</div>
+        <div class="card"><b>1. Brief</b><br/>Tell the AI your product, audience, and goal.</div>
+        <div class="card"><b>2. Plan</b><br/>Get strategy, messaging, and ad ideas instantly.</div>
+        <div class="card"><b>3. Build</b><br/>Generate copy, emails, and a 7-day calendar.</div>
+        <div class="card"><b>4. Iterate</b><br/>Refine with data and A/B variants.</div>
       </div>
     </div>
   </section>
@@ -222,45 +137,45 @@
   <section id="pricing">
     <div class="container">
       <h2>Pricing</h2>
-      <p class="sub">Διάλεξε πλάνο. Μπορείς να αναβαθμίσεις/ακυρώσεις οποτεδήποτε.</p>
+      <p class="sub">Choose the plan that fits your needs. Upgrade/cancel anytime.</p>
       <div class="pricing">
         <div class="price-card">
           <span class="tag">Starter</span>
-          <div class="price">$9<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="price">$13.99<span style="font-size:14px;color:var(--muted)">/mo</span></div>
           <div class="ul">
             <div class="ok">✓ Basic strategy & 3 ad ideas</div>
             <div class="ok">✓ 7-day content outline</div>
             <div class="no">— No file analysis</div>
           </div>
-          <a class="btn primary" href="#" onclick="startCheckout('starter')" rel="nofollow">Choose Starter</a>
+          <a class="btn primary js-action" data-action="checkout" data-plan="starter" href="#">Choose Starter</a>
         </div>
 
         <div class="price-card" style="border-color:#6c7cff99;box-shadow:0 10px 40px #6c7cff22">
           <span class="tag">Pro • Most Popular</span>
-          <div class="price">$29<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="price">$28.99<span style="font-size:14px;color:var(--muted)">/mo</span></div>
           <div class="ul">
             <div class="ok">✓ Full strategy + KPIs</div>
             <div class="ok">✓ 9 ad variants + CTAs</div>
             <div class="ok">✓ Exportable 7-day calendar</div>
             <div class="no">— No team seats</div>
           </div>
-          <a class="btn primary" href="#" onclick="startCheckout('pro')" rel="nofollow">Go Pro</a>
+          <a class="btn primary js-action" data-action="checkout" data-plan="pro" href="#">Go Pro</a>
         </div>
 
         <div class="price-card">
           <span class="tag">Premium</span>
-          <div class="price">$79<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="price">$87.99<span style="font-size:14px;color:var(--muted)">/mo</span></div>
           <div class="ul">
             <div class="ok">✓ Everything in Pro</div>
             <div class="ok">✓ File/CSV analysis</div>
             <div class="ok">✓ Priority responses</div>
             <div class="ok">✓ 3 team seats</div>
           </div>
-          <a class="btn primary" href="#" onclick="startCheckout('premium')" rel="nofollow">Upgrade</a>
+          <a class="btn primary js-action" data-action="checkout" data-plan="premium" href="#">Upgrade</a>
         </div>
       </div>
       <div class="panel" style="margin-top:18px">
-        <div class="meta">Η δωρεάν δοκιμή (7 ημέρες) ζητάει κάρτα. Αν δεν ακυρώσεις εγκαίρως, αναβαθμίζεται αυτόματα στο Pro.</div>
+        <div class="meta">7-day trial requires a card. If not cancelled before it ends, it renews to Pro.</div>
       </div>
     </div>
   </section>
@@ -269,9 +184,9 @@
     <div class="container">
       <h2>FAQ</h2>
       <div class="faq">
-        <details><summary>Πώς ξεκινάω;</summary><p>Πάτησε “Start Free” για 7 ημέρες πρόσβαση (απαιτείται κάρτα).</p></details>
-        <details><summary>Μπορώ να ακυρώσω;</summary><p>Ναι, οποιαδήποτε στιγμή από το billing portal πριν τη λήξη της δοκιμής.</p></details>
-        <details><summary>Τι περιλαμβάνεται;</summary><p>Στρατηγικές, ad copy, 7-day content plan, KPIs. Στο Premium περιλαμβάνεται και ανάλυση αρχείων.</p></details>
+        <details><summary>How do I start?</summary><p>Click “Start Free” for a 7-day trial (card required).</p></details>
+        <details><summary>Can I cancel?</summary><p>Yes, anytime from your billing portal before the trial ends.</p></details>
+        <details><summary>What’s included?</summary><p>Strategies, ad copy, a 7-day content plan, and KPIs. Premium adds file analysis.</p></details>
       </div>
     </div>
   </section>
@@ -280,56 +195,78 @@
     <div class="container foot">
       <div>© <span id="y"></span> NovaMark AI • All rights reserved</div>
       <div>
-        <a href="#pricing">Pricing</a> •
-        <a href="#faq">FAQ</a> •
-        <a href="mailto:hello@yourdomain.com">Contact</a>
+        <a class="js-action" data-action="scroll" data-url="#pricing" data-smooth="true" href="#pricing">Pricing</a> •
+        <a class="js-action" data-action="scroll" data-url="#faq" data-smooth="true" href="#faq">FAQ</a> •
+        <a class="js-action" data-action="link" data-url="mailto:hello@yourdomain.com" href="mailto:hello@yourdomain.com">Contact</a>
       </div>
     </div>
   </footer>
 
-  <!-- 💬 Floating bubble -->
+  <!-- Chat bubble -->
   <button id="aiBubble" aria-controls="aiModal" aria-expanded="false" aria-label="Open AI helper">💬</button>
 
-  <!-- 🪟 Chat modal -->
+  <!-- Chat modal -->
   <div id="aiModal" role="dialog" aria-modal="true" aria-labelledby="aiDialogTitle" style="display:none">
     <div id="aiDialog">
       <header>
         <div id="aiDialogTitle">AI Marketing Advisor</div>
         <button id="aiClose" aria-label="Close chat">×</button>
       </header>
-      <div id="aiBody" class="ai-body"><div class="loading">Φόρτωση…</div></div>
+      <div id="aiBody" class="ai-body"><div class="loading">Loading…</div></div>
     </div>
   </div>
 
   <script>
-    // footer year
     document.getElementById('y').textContent = new Date().getFullYear();
 
-    // ===== ΡΥΘΜΙΣΕΙΣ =====
-    const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/'; // ← ΒΑΛΕ ΤΟ ΔΙΚΟ ΣΟΥ chat URL
+    // ===== CONFIG =====
+    const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/'; // TODO: your chat app URL
     const CHECK_ACCESS_ENDPOINT = '/api/check-access';
-    const PRICE_IDS = {
-      starter:  'STARTER_PRICE_ID',  // ← βάλε το Stripe price id
-      pro:      'PRO_PRICE_ID',      // ← βάλε το Stripe price id
-      premium:  'PREMIUM_PRICE_ID'   // ← βάλε το Stripe price id
-    };
 
-    // ===== Checkout actions =====
+    // ===== Router for clicks (trial / checkout / link / scroll) =====
     async function startCheckout(plan){
       try{
         const r = await fetch('/api/create-checkout', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ priceId: PRICE_IDS[plan], plan })
+          body: JSON.stringify({ plan })
         });
         const { url, error } = await r.json();
-        if (url) { location.href = url; }
-        else { alert('Checkout error: ' + (error || 'unknown')); }
+        if (url) location.href = url;
+        else alert('Checkout error: ' + (error || 'unknown'));
       }catch(e){ alert('Network error'); }
     }
-    function startTrial(){ startCheckout('pro'); } // 7-day trial στο Pro (στο server ορίζουμε trial)
+    async function startTrial(){ return startCheckout('pro'); }
 
-    // ===== AI bubble / modal =====
+    function handleActionClick(e){
+      const el = e.currentTarget;
+      const action = el.dataset.action;
+      const plan   = el.dataset.plan;
+      const url    = el.dataset.url;
+      const smooth = el.dataset.smooth === 'true';
+      if (!action) return;
+
+      e.preventDefault();
+      switch(action){
+        case 'trial': return startTrial();
+        case 'checkout': return plan ? startCheckout(plan) : null;
+        case 'link':
+          if (!url) return;
+          return (location.href = url);
+        case 'scroll':
+          if (!url) return;
+          const id = url.startsWith('#') ? url : '#' + url;
+          const node = document.querySelector(id);
+          if (node) node.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+          return;
+        default: console.warn('Unknown action:', action);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.js-action').forEach(btn => btn.addEventListener('click', handleActionClick));
+    });
+
+    // ===== Chat bubble / modal with access check =====
     (function(){
       const bubble = document.getElementById('aiBubble');
       const modal  = document.getElementById('aiModal');
@@ -348,7 +285,6 @@
         try { return btoa(unescape(encodeURIComponent(JSON.stringify(ctx)))); }
         catch { return ''; }
       }
-
       async function userHasAccess(){
         try{
           const resp = await fetch(CHECK_ACCESS_ENDPOINT, { credentials: 'include' });
@@ -357,7 +293,6 @@
           return !!data.hasAccess;
         }catch{ return false; }
       }
-
       function renderIframe(container, src){
         const iframe = document.createElement('iframe');
         iframe.id = 'aiFrame';
@@ -376,19 +311,17 @@
       function renderPaywall(container){
         container.innerHTML = `
           <div class="panel" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
-            <h3 style="margin:0">Πρόσβαση Premium</h3>
-            <p style="color:#a5b4d6;margin:0">Για να χρησιμοποιήσεις τον AI βοηθό, χρειάζεται ενεργή συνδρομή.</p>
+            <h3 style="margin:0">Premium Access</h3>
+            <p style="color:#a5b4d6;margin:0">Purchase a plan to use the AI assistant.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <a class="btn primary" href="#pricing">Δες τα πλάνα</a>
-              <button class="btn" onclick="location.hash='#pricing'">Έχω ήδη πρόσβαση</button>
+              <a class="btn primary js-action" data-action="scroll" data-url="#pricing" data-smooth="true" href="#pricing">See Plans</a>
             </div>
           </div>
         `;
       }
-
       async function initChatBody(){
         const container = document.getElementById('aiBody');
-        container.innerHTML = '<div class="loading">Έλεγχος πρόσβασης…</div>';
+        container.innerHTML = '<div class="loading">Checking access…</div>';
         const has = await userHasAccess();
         if(!has){ renderPaywall(container); return; }
         const ctx = getPageContext();
@@ -397,7 +330,6 @@
         const src = `${CHAT_BASE_URL}${glue}context=${encoded}`;
         renderIframe(container, src);
       }
-
       function openChat(){
         modal.style.display = 'flex';
         bubble.setAttribute('aria-expanded','true');
@@ -409,7 +341,6 @@
         bubble.setAttribute('aria-expanded','false');
         bubble.focus({preventScroll:true});
       }
-
       bubble.addEventListener('click', openChat);
       close.addEventListener('click', closeChat);
       modal.addEventListener('click', e => { if (e.target === modal) closeChat(); });
@@ -417,42 +348,54 @@
     })();
   </script>
 
-  <noscript>Ενεργοποίησε JavaScript για να χρησιμοποιήσεις τον AI βοηθό.</noscript>
+  <noscript>Please enable JavaScript to use the AI assistant.</noscript>
 </body>
 </html>
-// /api/check-access.js
-export default async function handler(req, res) {
-  // TODO: Βάλε τον πραγματικό έλεγχο (cookie/session/DB)
-  // Προς το παρόν: πάντα true για να δουλέψει το iframe
-  res.status(200).json({ hasAccess: true });
-}
-// /api/create-checkout.js
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Success</title></head>
+<body style="font-family:system-ui;padding:24px">
+  <h1>Subscription successful 🎉</h1>
+  <p>We’re enabling your access…</p>
+  <script>
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const session_id = params.get('session_id');
+      if (session_id) {
+        await fetch('/api/link-session', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ session_id })
+        });
+      }
+      setTimeout(()=> location.href='/', 800);
+    })();
+  </script>
+</body>
+</html>
 import Stripe from 'stripe';
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICE_IDS = {
-  starter:  'STARTER_PRICE_ID',   // βάλε το δικό σου
-  pro:      'PRO_PRICE_ID',       // βάλε το δικό σου
-  premium:  'PREMIUM_PRICE_ID'    // βάλε το δικό σου
+  starter:  'STARTER_PRICE_ID',   // TODO: 13.99
+  pro:      'PRO_PRICE_ID',       // TODO: 28.99
+  premium:  'PREMIUM_PRICE_ID'    // TODO: 87.99
 };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { plan } = req.body;
+    const { plan } = req.body || {};
     const priceId = PRICE_IDS[plan];
     if (!priceId) return res.status(400).json({ error: 'Unknown plan' });
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#success`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
-      subscription_data: {
-        trial_period_days: plan === 'pro' ? 7 : undefined // trial στο Pro
-      },
+      subscription_data: { trial_period_days: plan === 'pro' ? 7 : undefined },
       allow_promotion_codes: true
     });
 
@@ -461,17 +404,45 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Stripe error' });
   }
 }
-// /api/stripe-webhook.js
 import Stripe from 'stripe';
-import { buffer } from 'micro';
-
-export const config = { api: { bodyParser: false } };
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  const sig = req.headers['stripe-signature'];
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  try {
+    const { session_id } = req.body || {};
+    if (!session_id) return res.status(400).json({ error: 'Missing session_id' });
+
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (!session || !session.customer) return res.status(400).json({ error: 'Invalid session' });
+
+    const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id;
+
+    const cookie = `stripe_cid=${customerId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60*60*24*365}; Secure`;
+    res.setHeader('Set-Cookie', cookie);
+    res.status(200).json({ ok: true, customerId });
+  } catch (e) {
+    res.status(500).json({ error: 'Link failed' });
+  }
+}
+import Stripe from 'stripe';
+import { buffer } from 'micro';
+import { kv } from '@vercel/kv';
+
+export const config = { api: { bodyParser: false } };
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+async function upsertFromSubscription(sub) {
+  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+  const status = sub.status; // 'active' | 'trialing' | 'canceled' | 'past_due' ...
+  const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
+  const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+  await kv.set(`sub:customer:${customerId}`, { status, currentPeriodEnd, trialEnd });
+}
+
+export default async function handler(req, res) {
+  const sig = req.headers['stripe-signature'];
   let event;
   try {
     const buf = await buffer(req);
@@ -480,94 +451,51 @@ export default async function handler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // TODO: Στο checkout.session.completed / subscription.updated
-  // γράψε σε DB ότι ο χρήστης έχει ενεργή συνδρομή.
-  // Εδώ κρατάμε μόνο log για ξεκίνημα.
-  console.log('Stripe event:', event.type);
-
-  res.json({ received: true });
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const subId = session.subscription;
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          await upsertFromSubscription(sub);
+        }
+        break;
+      }
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        await upsertFromSubscription(sub);
+        break;
+      }
+    }
+    res.json({ received: true });
+  } catch (e) {
+    res.status(500).send('Webhook handler failed');
+  }
 }
-<a class="btn primary js-action"
-   data-action="trial"
-   href="#">
-  Start Free (7 days)
-</a>
-<!-- Starter -->
-<a class="btn primary js-action"
-   data-action="checkout"
-   data-plan="starter"
-   href="#">
-  Choose Starter
-</a>
-
-<!-- Pro -->
-<a class="btn primary js-action"
-   data-action="checkout"
-   data-plan="pro"
-   href="#">
-  Go Pro
-</a>
-
-<!-- Premium -->
-<a class="btn primary js-action"
-   data-action="checkout"
-   data-plan="premium"
-   href="#">
-  Upgrade
-</a>
-<!-- ίδιο tab -->
-<a class="btn js-action"
-   data-action="link"
-   data-url="https://novamark.ai/blog/best-practices"
-   href="#">
-  Blog
-</a>
-
-<!-- νέο tab -->
-<a class="btn js-action"
-   data-action="link"
-   data-url="https://dash.stripe.com"
-   data-target="_blank"
-   href="#">
-  Billing Portal
-</a>
-<a class="btn js-action"
-   data-action="scroll"
-   data-url="#pricing"
-   data-smooth="true"
-   href="#pricing">
-  See Pricing
-</a>
-// /api/create-checkout.js
-import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-const PRICE_IDS = {
-  starter:  'price_xxxSTARTER',
-  pro:      'price_xxxPRO',
-  premium:  'price_xxxPREMIUM'
-};
+import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const { plan } = req.body || {};
-  const priceId = PRICE_IDS[plan];
-  if (!priceId) return res.status(400).json({ error: 'Unknown plan' });
+  try {
+    const cookieHeader = req.headers.cookie || '';
+    const match = cookieHeader.match(/(?:^|;\s*)stripe_cid=([^;]+)/);
+    const customerId = match ? decodeURIComponent(match[1]) : null;
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
-    subscription_data: { trial_period_days: plan === 'pro' ? 7 : undefined },
-    allow_promotion_codes: true
-  });
+    if (!customerId) return res.status(200).json({ hasAccess: false });
 
-  res.status(200).json({ url: session.url });
+    const info = await kv.get(`sub:customer:${customerId}`);
+    if (!info) return res.status(200).json({ hasAccess: false });
+
+    const now = Date.now();
+    const statusOk = ['active', 'trialing'].includes(info.status);
+    const withinPeriod = info.currentPeriodEnd ? new Date(info.currentPeriodEnd).getTime() > now : false;
+    const withinTrial  = info.trialEnd ? new Date(info.trialEnd).getTime() > now : false;
+
+    const hasAccess = (statusOk && (withinPeriod || withinTrial));
+    res.status(200).json({ hasAccess, status: info.status, currentPeriodEnd: info.currentPeriodEnd, trialEnd: info.trialEnd });
+  } catch (e) {
+    res.status(200).json({ hasAccess: false });
+  }
 }
-<a class="btn js-action"
-   data-action="link"
-   data-url="https://novamark.ai/pricing?utm_source=hero_btn"
-   href="#">
-  Pricing
-</a>
