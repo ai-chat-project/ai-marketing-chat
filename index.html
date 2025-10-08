@@ -1,82 +1,220 @@
+/
+├─ index.html
+└─ api/
+   ├─ check-access.js
+   ├─ create-checkout.js
+   └─ stripe-webhook.js
 <!doctype html>
 <html lang="el">
 <head>
   <meta charset="utf-8" />
-  <title>NovaMark AI — Demo με Προστατευμένο Chat</title>
+  <title>NovaMark AI — Your 24/7 Marketing Co-Pilot</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="AI marketing copilot demo με έλεγχο πρόσβασης." />
+  <meta name="description" content="AI marketing advisor που φτιάχνει στρατηγικές, ad copy, budgets και growth plans σε λεπτά." />
+  <link rel="icon" href="favicon.ico" />
   <style>
-    /* ====== Demo page styling (προαιρετικό) ====== */
     :root{
-      --bg:#070b14; --panel:#0d1428; --line:#1e2a4a; --txt:#eef2ff; --muted:#a5b4d6;
-      --brand:#6c7cff; --brand2:#22d3ee;
+      --bg:#070b14; --panel:#0d1428; --soft:#111a33; --line:#1e2a4a;
+      --txt:#eef2ff; --muted:#a5b4d6; --brand:#6c7cff; --brand-2:#22d3ee; --ok:#22c55e;
     }
+    *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:radial-gradient(1200px 600px at 20% -10%, #13214a33, transparent), var(--bg); color:var(--txt); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    h1{margin:10px 0 6px;font-size:34px}
-    p.lead{color:var(--muted);max-width:720px}
-    .panel{background:linear-gradient(180deg,#0d1428,#0a1122);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:0 20px}
 
-    /* ====== Bubble & Modal styles ====== */
-    #aiBubble{
-      position:fixed; right:20px; bottom:20px;
-      width:56px; height:56px; border-radius:50%;
-      background:linear-gradient(135deg,#5865f2,#4654e2);
-      color:#fff; font:600 18px/1 system-ui; border:0; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow:0 10px 20px rgba(0,0,0,.35); z-index:9999;
-    }
-    #aiBubble:focus{ outline:2px solid #fff8; outline-offset:2px; }
+    /* Nav */
+    nav{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#070b1499,#070b1400);backdrop-filter:blur(8px);border-bottom:1px solid #ffffff12}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+    .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 0 40px #6c7cff55}
+    .nav-cta a{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0f1832,#0a1226);font-weight:600}
+    .nav-cta a.primary{border-color:#6c7cff55;background:linear-gradient(180deg,#5865f2,#4553e2);box-shadow:0 8px 24px #5865f244}
 
-    #aiModal{
-      position:fixed; inset:0; background:rgba(0,0,0,.5);
-      display:none; align-items:center; justify-content:center; z-index:9998;
-    }
-    #aiDialog{
-      width:min(960px,96vw); height:min(82vh,920px);
-      background:#0b1220; border-radius:16px; overflow:hidden;
-      border:1px solid #1e2a4a; display:flex; flex-direction:column;
-    }
-    #aiDialog header{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 14px; background:#11192e; color:#f4f6fb;
-    }
-    #aiClose{ background:transparent; border:0; color:#fff; font-size:22px; cursor:pointer; }
-    .ai-body{ flex:1; min-height:360px; position:relative; }
-    .loading{ display:flex; align-items:center; justify-content:center; height:100%; color:#a5b4d6; }
+    /* Hero */
+    .hero{padding:76px 0 40px}
+    .grid-2{display:grid;grid-template-columns:1.2fr 1fr;gap:32px}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;border:1px solid #6c7cff44;background:#0b1220aa;font-size:12px}
+    .h1{font-size:40px;line-height:1.1;margin:14px 0 10px;font-weight:900;letter-spacing:-.02em}
+    .lead{font-size:16px;color:var(--muted);max-width:640px}
+    .hero-ctas{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#121a36,#0b1226);font-weight:700;cursor:pointer}
+    .btn.primary{border-color:#6c7cff77;background:linear-gradient(180deg,#6c7cff,#5563f2);box-shadow:0 10px 30px #6c7cff33}
+    .meta{font-size:12px;color:var(--muted);margin-top:10px}
+    .panel{background:linear-gradient(180deg,#0d1428,#0a1122);border:1px solid var(--line);border-radius:16px;padding:16px}
+    .hero-card{min-height:280px;display:grid;gap:10px}
+    .pill{font-size:12px;border:1px solid #2a3866;border-radius:999px;padding:6px 10px;display:inline-flex;gap:8px;align-items:center}
+    .list{display:grid;gap:10px;font-size:14px}
+    .li{display:flex;gap:10px;align-items:flex-start}
+    .li .dot{width:8px;height:8px;border-radius:50%;background:var(--brand-2);margin-top:6px;box-shadow:0 0 12px #22d3eeaa}
 
-    .paywall{ padding:24px; color:#eef2ff; }
-    .paywall h3{ margin:0 0 8px; }
-    .pw-ctas{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
-    .btn{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 14px; border-radius:12px; border:1px solid #1e2a4a;
-      background:linear-gradient(180deg,#121a36,#0b1226); color:#eef2ff; font-weight:700; cursor:pointer;
-      text-decoration:none;
-    }
-    .btn.primary{
-      border-color:#6c7cff77;
-      background:linear-gradient(180deg,#6c7cff,#5563f2);
-      box-shadow:0 10px 30px rgba(108,124,255,.25);
-    }
+    /* Sections */
+    section{padding:54px 0;border-top:1px solid #ffffff0f}
+    h2{font-size:28px;margin:0 0 8px}
+    .sub{color:var(--muted);max-width:720px;margin-bottom:22px}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .card{background:linear-gradient(180deg,#0e1530,#0b1326);border:1px solid var(--line);border-radius:16px;padding:18px}
+    .pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .price-card{background:linear-gradient(180deg,#0e1530,#0b1326);border:1px solid var(--line);border-radius:18px;padding:20px;position:relative}
+    .price{font-size:36px;font-weight:900;margin:6px 0}
+    .tag{position:absolute;top:12px;right:12px;font-size:12px;border:1px solid #6c7cff66;border-radius:999px;padding:4px 8px;background:#111a33}
+    .ul{display:grid;gap:10px;margin:12px 0}
+    .ul .ok{color:var(--ok)} .ul .no{color:#ef4444}
+    .faq{display:grid;gap:10px}
+    details{background:#0c142b;border:1px solid var(--line);border-radius:12px;padding:14px}
+    summary{cursor:pointer;font-weight:700}
 
-    @media (prefers-reduced-motion:no-preference){
-      #aiModal{ animation:fadeIn .15s ease-out; }
-      @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+    /* Footer */
+    footer{padding:24px 0;color:var(--muted)}
+    .foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+    /* Bubble + Modal */
+    #aiBubble{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#5865f2,#4654e2);color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px/1 system-ui;border:none;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.35);z-index:9999}
+    #aiBubble:focus{outline:2px solid #fff8;outline-offset:2px}
+    #aiModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9998}
+    #aiDialog{width:min(960px,96vw);height:min(82vh,920px);background:#0b1220;border-radius:16px;overflow:hidden;border:1px solid #1e2a4a;display:flex;flex-direction:column}
+    #aiDialog header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#11192e;color:#f4f6fb}
+    #aiClose{background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer}
+    .ai-body{flex:1;min-height:360px;position:relative}
+    .loading{display:flex;align-items:center;justify-content:center;height:100%;color:#a5b4d6}
+
+    /* Responsive */
+    @media (max-width:1000px){
+      .grid-2{grid-template-columns:1fr}
+      .features{grid-template-columns:1fr 1fr}
+      .pricing{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
-  <!-- ====== Περιεχόμενο σελίδας (δικό σου) ====== -->
-  <div class="container">
-    <h1>NovaMark AI — Your 24/7 Marketing Co-Pilot</h1>
-    <p class="lead">Δείγμα σελίδας. Πάτησε το 💬 κάτω δεξιά για τον AI βοηθό. Αν δεν έχεις πρόσβαση, θα εμφανιστεί paywall.</p>
-    <div class="panel">
-      <strong>Tip:</strong> Μπορείς να επιλέξεις κείμενο στη σελίδα και μετά να πατήσεις το 💬 — το επιλεγμένο κείμενο περνάει σαν context στο chat.
+  <nav>
+    <div class="container nav-inner">
+      <div class="brand"><div class="logo"></div> NovaMark AI</div>
+      <div class="nav-cta">
+        <a href="#pricing">Pricing</a>
+        <a class="primary" href="#" onclick="startTrial()" rel="nofollow">Try Free</a>
+      </div>
     </div>
-  </div>
+  </nav>
 
-  <!-- 💬 Floating chat bubble -->
+  <header class="hero">
+    <div class="container grid-2">
+      <div>
+        <div class="badge">⚡ Launch campaigns 10× faster</div>
+        <h1 class="h1">Your 24/7 AI Marketing Co-Pilot</h1>
+        <p class="lead">Πάρε στρατηγική, ad copy, budget split, emails και growth plan — προσαρμοσμένα στην επιχείρησή σου σε λίγα λεπτά.</p>
+        <div class="hero-ctas">
+          <a class="btn primary" href="#" onclick="startTrial()" rel="nofollow">Start Free (7 days)</a>
+          <a class="btn" href="#how">See how it works</a>
+        </div>
+        <div class="meta">Card required for free trial · Cancel anytime</div>
+      </div>
+      <div class="panel hero-card">
+        <div class="pill">✅ Strategy builder</div>
+        <div class="pill">💬 Ad copy + hooks</div>
+        <div class="pill">📅 7-day content plan</div>
+        <div class="list">
+          <div class="li"><div class="dot"></div>Playbooks για Meta/Google/TikTok.</div>
+          <div class="li"><div class="dot"></div>3× ad variants με CTAs.</div>
+          <div class="li"><div class="dot"></div>Budget split, KPIs, next actions.</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="container">
+      <h2>Why teams use NovaMark</h2>
+      <p class="sub">Από solo founders έως enterprise — στείλε καμπάνιες πιο γρήγορα με AI καθοδήγηση που είναι συγκεκριμένη και μετρήσιμη.</p>
+      <div class="features">
+        <div class="card"><h3>Actionable strategy</h3><p>Βήματα με timing, κανάλια και KPIs.</p></div>
+        <div class="card"><h3>Ad copy που μετατρέπει</h3><p>Headlines, bodies, hooks & CTAs για Meta/Google/TikTok.</p></div>
+        <div class="card"><h3>Content calendar</h3><p>7-day πλάνο με captions & prompts.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="container">
+      <h2>How it works</h2>
+      <p class="sub">Τρία βήματα από ιδέα σε launch.</p>
+      <div class="features" style="grid-template-columns:repeat(4,1fr)">
+        <div class="card"><b>1. Brief</b><br/>Πες προϊόν, κοινό, στόχο.</div>
+        <div class="card"><b>2. Plan</b><br/>Στρατηγική, messaging, ιδέες ads.</div>
+        <div class="card"><b>3. Build</b><br/>Copy, emails, 7-day calendar.</div>
+        <div class="card"><b>4. Iterate</b><br/>Βελτίωση με data & A/B.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="container">
+      <h2>Pricing</h2>
+      <p class="sub">Διάλεξε πλάνο. Μπορείς να αναβαθμίσεις/ακυρώσεις οποτεδήποτε.</p>
+      <div class="pricing">
+        <div class="price-card">
+          <span class="tag">Starter</span>
+          <div class="price">$9<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="ul">
+            <div class="ok">✓ Basic strategy & 3 ad ideas</div>
+            <div class="ok">✓ 7-day content outline</div>
+            <div class="no">— No file analysis</div>
+          </div>
+          <a class="btn primary" href="#" onclick="startCheckout('starter')" rel="nofollow">Choose Starter</a>
+        </div>
+
+        <div class="price-card" style="border-color:#6c7cff99;box-shadow:0 10px 40px #6c7cff22">
+          <span class="tag">Pro • Most Popular</span>
+          <div class="price">$29<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="ul">
+            <div class="ok">✓ Full strategy + KPIs</div>
+            <div class="ok">✓ 9 ad variants + CTAs</div>
+            <div class="ok">✓ Exportable 7-day calendar</div>
+            <div class="no">— No team seats</div>
+          </div>
+          <a class="btn primary" href="#" onclick="startCheckout('pro')" rel="nofollow">Go Pro</a>
+        </div>
+
+        <div class="price-card">
+          <span class="tag">Premium</span>
+          <div class="price">$79<span style="font-size:14px;color:var(--muted)">/mo</span></div>
+          <div class="ul">
+            <div class="ok">✓ Everything in Pro</div>
+            <div class="ok">✓ File/CSV analysis</div>
+            <div class="ok">✓ Priority responses</div>
+            <div class="ok">✓ 3 team seats</div>
+          </div>
+          <a class="btn primary" href="#" onclick="startCheckout('premium')" rel="nofollow">Upgrade</a>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px">
+        <div class="meta">Η δωρεάν δοκιμή (7 ημέρες) ζητάει κάρτα. Αν δεν ακυρώσεις εγκαίρως, αναβαθμίζεται αυτόματα στο Pro.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="container">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <details><summary>Πώς ξεκινάω;</summary><p>Πάτησε “Start Free” για 7 ημέρες πρόσβαση (απαιτείται κάρτα).</p></details>
+        <details><summary>Μπορώ να ακυρώσω;</summary><p>Ναι, οποιαδήποτε στιγμή από το billing portal πριν τη λήξη της δοκιμής.</p></details>
+        <details><summary>Τι περιλαμβάνεται;</summary><p>Στρατηγικές, ad copy, 7-day content plan, KPIs. Στο Premium περιλαμβάνεται και ανάλυση αρχείων.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container foot">
+      <div>© <span id="y"></span> NovaMark AI • All rights reserved</div>
+      <div>
+        <a href="#pricing">Pricing</a> •
+        <a href="#faq">FAQ</a> •
+        <a href="mailto:hello@yourdomain.com">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 💬 Floating bubble -->
   <button id="aiBubble" aria-controls="aiModal" aria-expanded="false" aria-label="Open AI helper">💬</button>
 
   <!-- 🪟 Chat modal -->
@@ -91,18 +229,39 @@
   </div>
 
   <script>
+    // footer year
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // ===== ΡΥΘΜΙΣΕΙΣ =====
+    const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/'; // ← ΒΑΛΕ ΤΟ ΔΙΚΟ ΣΟΥ chat URL
+    const CHECK_ACCESS_ENDPOINT = '/api/check-access';
+    const PRICE_IDS = {
+      starter:  'STARTER_PRICE_ID',  // ← βάλε το Stripe price id
+      pro:      'PRO_PRICE_ID',      // ← βάλε το Stripe price id
+      premium:  'PREMIUM_PRICE_ID'   // ← βάλε το Stripe price id
+    };
+
+    // ===== Checkout actions =====
+    async function startCheckout(plan){
+      try{
+        const r = await fetch('/api/create-checkout', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ priceId: PRICE_IDS[plan], plan })
+        });
+        const { url, error } = await r.json();
+        if (url) { location.href = url; }
+        else { alert('Checkout error: ' + (error || 'unknown')); }
+      }catch(e){ alert('Network error'); }
+    }
+    function startTrial(){ startCheckout('pro'); } // 7-day trial στο Pro (στο server ορίζουμε trial)
+
+    // ===== AI bubble / modal =====
     (function(){
-      // ====== ΡΥΘΜΙΣΕΙΣ ======
-      // 1) To δικό σου hosted chat (Vercel app σου). Μπορείς να βάλεις και production domain.
-      const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/';
-      // 2) Endpoint για έλεγχο πρόσβασης (πρέπει να επιστρέφει JSON: { hasAccess: true|false })
-      const CHECK_ACCESS_ENDPOINT = '/api/check-access';
+      const bubble = document.getElementById('aiBubble');
+      const modal  = document.getElementById('aiModal');
+      const close  = document.getElementById('aiClose');
 
-      // Δυνατότητα override από URL (?chat=https://…)
-      const urlOverride = new URLSearchParams(location.search).get('chat');
-      const CHAT_URL = urlOverride || CHAT_BASE_URL;
-
-      // ====== Συλλογή context από τη σελίδα ======
       function getPageContext(){
         const title = document.title || '';
         const href  = location.href;
@@ -117,7 +276,6 @@
         catch { return ''; }
       }
 
-      // ====== Access check ======
       async function userHasAccess(){
         try{
           const resp = await fetch(CHECK_ACCESS_ENDPOINT, { credentials: 'include' });
@@ -127,7 +285,6 @@
         }catch{ return false; }
       }
 
-      // ====== Renderers ======
       function renderIframe(container, src){
         const iframe = document.createElement('iframe');
         iframe.id = 'aiFrame';
@@ -145,17 +302,15 @@
       }
       function renderPaywall(container){
         container.innerHTML = `
-          <div class="paywall">
-            <h3>Πρόσβαση Premium</h3>
-            <p>Για να χρησιμοποιήσεις τον AI βοηθό, χρειάζεται ενεργή συνδρομή.</p>
-            <div class="pw-ctas">
-              <a class="btn primary" href="/pricing">Απόκτησε πρόσβαση</a>
-              <button class="btn" id="retryAccess">Έχω ήδη πρόσβαση</button>
+          <div class="panel" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
+            <h3 style="margin:0">Πρόσβαση Premium</h3>
+            <p style="color:#a5b4d6;margin:0">Για να χρησιμοποιήσεις τον AI βοηθό, χρειάζεται ενεργή συνδρομή.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a class="btn primary" href="#pricing">Δες τα πλάνα</a>
+              <button class="btn" onclick="location.hash='#pricing'">Έχω ήδη πρόσβαση</button>
             </div>
           </div>
         `;
-        const retry = container.querySelector('#retryAccess');
-        if (retry) retry.addEventListener('click', initChatBody);
       }
 
       async function initChatBody(){
@@ -165,15 +320,10 @@
         if(!has){ renderPaywall(container); return; }
         const ctx = getPageContext();
         const encoded = encodeContext(ctx);
-        const glue = CHAT_URL.includes('?') ? '&' : '?';
-        const src = `${CHAT_URL}${glue}context=${encoded}`;
+        const glue = CHAT_BASE_URL.includes('?') ? '&' : '?';
+        const src = `${CHAT_BASE_URL}${glue}context=${encoded}`;
         renderIframe(container, src);
       }
-
-      // ====== Άνοιγμα/κλείσιμο modal ======
-      const bubble = document.getElementById('aiBubble');
-      const modal  = document.getElementById('aiModal');
-      const close  = document.getElementById('aiClose');
 
       function openChat(){
         modal.style.display = 'flex';
@@ -197,3 +347,70 @@
   <noscript>Ενεργοποίησε JavaScript για να χρησιμοποιήσεις τον AI βοηθό.</noscript>
 </body>
 </html>
+// /api/check-access.js
+export default async function handler(req, res) {
+  // TODO: Βάλε τον πραγματικό έλεγχο (cookie/session/DB)
+  // Προς το παρόν: πάντα true για να δουλέψει το iframe
+  res.status(200).json({ hasAccess: true });
+}
+// /api/create-checkout.js
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const PRICE_IDS = {
+  starter:  'STARTER_PRICE_ID',   // βάλε το δικό σου
+  pro:      'PRO_PRICE_ID',       // βάλε το δικό σου
+  premium:  'PREMIUM_PRICE_ID'    // βάλε το δικό σου
+};
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  try {
+    const { plan } = req.body;
+    const priceId = PRICE_IDS[plan];
+    if (!priceId) return res.status(400).json({ error: 'Unknown plan' });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#pricing`,
+      subscription_data: {
+        trial_period_days: plan === 'pro' ? 7 : undefined // trial στο Pro
+      },
+      allow_promotion_codes: true
+    });
+
+    res.status(200).json({ url: session.url });
+  } catch (e) {
+    res.status(500).json({ error: 'Stripe error' });
+  }
+}
+// /api/stripe-webhook.js
+import Stripe from 'stripe';
+import { buffer } from 'micro';
+
+export const config = { api: { bodyParser: false } };
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export default async function handler(req, res) {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+  try {
+    const buf = await buffer(req);
+    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // TODO: Στο checkout.session.completed / subscription.updated
+  // γράψε σε DB ότι ο χρήστης έχει ενεργή συνδρομή.
+  // Εδώ κρατάμε μόνο log για ξεκίνημα.
+  console.log('Stripe event:', event.type);
+
+  res.json({ received: true });
+}
