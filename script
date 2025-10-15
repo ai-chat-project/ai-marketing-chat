@@ -1,0 +1,159 @@
+<script>
+  // Footer year
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  // ===== CONFIG =====
+  const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/'; // change if your chat is on a subpath
+  const CHECK_ACCESS_ENDPOINT = '/api/check-access';
+
+  // ===== Helper: external URL test =====
+  function isExternal(url){ return /^(https?:|mailto:|tel:)/i.test(url); }
+
+  // ===== Checkout =====
+  async function startCheckout(plan){
+    try{
+      const r = await fetch('/api/create-checkout', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ plan })
+      });
+
+      if (!r.ok) {
+        const text = await r.text().catch(()=> '');
+        alert(`Checkout error (${r.status}): ${text || 'Server error'}`);
+        return;
+      }
+      const data = await r.json().catch(()=> ({}));
+      if (data.url) location.href = data.url;
+      else alert('Checkout error: ' + (data.error || 'Unknown response'));
+    }catch(e){
+      console.error('startCheckout error', e);
+      alert('Network error. Open DevTools → Console for details.');
+    }
+  }
+  async function startTrial(){ return startCheckout('pro'); }
+
+  // ===== Global event delegation for .js-action links =====
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('a.js-action, button.js-action');
+    if (!el) return;                   // let normal links work as usual
+    e.preventDefault();                // only intercept our action links
+
+    const action = el.dataset.action;
+    const plan   = el.dataset.plan;
+    const url    = el.dataset.url;
+    const smooth = el.dataset.smooth === 'true';
+    const target = el.dataset.target || '_self';
+
+    try{
+      switch(action){
+        case 'trial':
+          return startTrial();
+
+        case 'checkout':
+          if (!plan) return alert('Missing plan');
+          return startCheckout(plan);
+
+        case 'link':
+          if (!url) return alert('Missing data-url on link action');
+          if (isExternal(url)) window.open(url, target);
+          else target === '_blank' ? window.open(url, '_blank') : (location.href = url);
+          return;
+
+        case 'scroll': {
+          if (!url) return alert('Missing data-url on scroll action');
+          const id = url.startsWith('#') ? url : '#' + url;
+          const node = document.querySelector(id);
+          if (node) node.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+          else url.startsWith('#') ? console.warn('Anchor not found:', id) : (location.href = url);
+          return;
+        }
+
+        default:
+          console.warn('Unknown action:', action, el);
+      }
+    }catch(err){
+      console.error('handleActionClick error:', err);
+      alert('Click handler error. See Console for details.');
+    }
+  });
+
+  // ===== Chat bubble / modal with access check =====
+  (function(){
+    const bubble = document.getElementById('aiBubble');
+    const modal  = document.getElementById('aiModal');
+    const close  = document.getElementById('aiClose');
+
+    function getPageContext(){
+      const title = document.title || '';
+      const href  = location.href;
+      const meta  = document.querySelector('meta[name="description"]');
+      const description = meta ? meta.content : '';
+      const selection = (window.getSelection && String(window.getSelection())) || '';
+      const h1 = (document.querySelector('h1') && document.querySelector('h1').innerText) || '';
+      return { title, href, description, selection, h1, ts: Date.now() };
+    }
+    function encodeContext(ctx){
+      try { return btoa(unescape(encodeURIComponent(JSON.stringify(ctx)))); }
+      catch { return ''; }
+    }
+    async function userHasAccess(){
+      try{
+        const resp = await fetch(CHECK_ACCESS_ENDPOINT, { credentials: 'include' });
+        if(!resp.ok) return false;
+        const data = await resp.json();
+        return !!data.hasAccess;
+      }catch{ return false; }
+    }
+    function renderIframe(container, src){
+      const iframe = document.createElement('iframe');
+      iframe.id = 'aiFrame';
+      iframe.src = src;
+      iframe.loading = 'lazy';
+      iframe.referrerPolicy = 'no-referrer';
+      iframe.title = 'AI Marketing Chat';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = '0';
+      iframe.setAttribute('allow', 'clipboard-write; microphone; camera');
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
+      container.innerHTML = '';
+      container.appendChild(iframe);
+    }
+    function renderPaywall(container){
+      container.innerHTML = `
+        <div class="panel" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
+          <h3 style="margin:0">Premium Access</h3>
+          <p style="color:#a5b4d6;margin:0">Purchase a plan to use the AI assistant.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn primary js-action" data-action="scroll" data-url="#pricing" data-smooth="true" href="#pricing">See Plans</a>
+          </div>
+        </div>
+      `;
+    }
+    async function initChatBody(){
+      const container = document.getElementById('aiBody');
+      container.innerHTML = '<div class="loading">Checking access…</div>';
+      const has = await userHasAccess();
+      if(!has){ renderPaywall(container); return; }
+      const ctx = getPageContext();
+      const encoded = encodeContext(ctx);
+      const glue = CHAT_BASE_URL.includes('?') ? '&' : '?';
+      const src = `${CHAT_BASE_URL}${glue}context=${encoded}`;
+      renderIframe(container, src);
+    }
+    function openChat(){
+      modal.style.display = 'flex';
+      initChatBody();
+    }
+    function closeChat(){ modal.style.display = 'none'; }
+
+    bubble.addEventListener('click', openChat);
+    close.addEventListener('click', closeChat);
+    modal.addEventListener('click', e => { if (e.target === modal) closeChat(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display === 'flex') closeChat(); });
+  })();
+
+  // ===== Tiny health ping to ensure JS ran =====
+  console.log('NovaMark JS loaded ✅');
+</script>
