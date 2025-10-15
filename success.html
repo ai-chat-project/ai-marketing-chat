@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Success</title></head>
+<body style="font-family:system-ui;padding:24px">
+  <h1>Subscription successful 🎉</h1>
+  <p>We’re enabling your access…</p>
+  <script>
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const session_id = params.get('session_id');
+      const key = session_id ? 'linked_session_' + session_id : null;
+
+      if (session_id && !localStorage.getItem(key)) {
+        try {
+          await fetch('/api/link-session', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ session_id })
+          });
+          localStorage.setItem(key, '1');
+        } catch(e) {}
+      }
+      // Avoid back-button loops
+      location.replace('/');
+    })();
+  </script>
+</body>
+</html>
