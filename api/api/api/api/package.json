@@ -3,7 +3,13 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "stripe": "^14.0.0",
-    "@vercel/kv": "^1.0.0"
+    "stripe": "^14.25.0",
+    "@vercel/kv": "^1.0.1"
+  },
+  "scripts": {
+    "dev": "echo \"Static site + Vercel Functions — use 'vercel dev'\" && exit 0",
+    "build": "echo \"No build step (static HTML).\" && exit 0",
+    "start": "echo \"Deploy on Vercel. Use 'vercel dev' locally.\" && exit 0"
   }
 }
+
