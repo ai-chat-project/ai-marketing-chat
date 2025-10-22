@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -16,12 +15,14 @@
     html,body{margin:0;padding:0;background:radial-gradient(1200px 600px at 20% -10%, #13214a33, transparent), var(--bg); color:var(--txt); font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
     a{color:inherit;text-decoration:none}
     .container{max-width:1200px;margin:0 auto;padding:0 20px}
+
     nav{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#070b1499,#070b1400);backdrop-filter:blur(8px);border-bottom:1px solid #ffffff12}
     .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
     .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
     .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 0 40px #6c7cff55}
     .nav-cta a{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0f1832,#0a1226);font-weight:600}
     .nav-cta a.primary{border-color:#6c7cff55;background:linear-gradient(180deg,#5865f2,#4553e2);box-shadow:0 8px 24px #5865f244}
+
     .hero{padding:76px 0 40px}
     .grid-2{display:grid;grid-template-columns:1.2fr 1fr;gap:32px}
     .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;border:1px solid #6c7cff44;background:#0b1220aa;font-size:12px}
@@ -37,6 +38,7 @@
     .list{display:grid;gap:10px;font-size:14px}
     .li{display:flex;gap:10px;align-items:flex-start}
     .li .dot{width:8px;height:8px;border-radius:50%;background:var(--brand-2);margin-top:6px;box-shadow:0 0 12px #22d3eeaa}
+
     section{padding:54px 0;border-top:1px solid #ffffff0f}
     h2{font-size:28px;margin:0 0 8px}
     .sub{color:var(--muted);max-width:720px;margin-bottom:22px}
@@ -51,8 +53,10 @@
     .faq{display:grid;gap:10px}
     details{background:#0c142b;border:1px solid #1e2a4a;border-radius:12px;padding:14px}
     summary{cursor:pointer;font-weight:700}
+
     footer{padding:24px 0;color:var(--muted)}
     .foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
     #aiBubble{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#5865f2,#4654e2);color:#fff;display:flex;align-items:center;justify-content:center;font:600 18px/1 system-ui;border:none;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.35);z-index:9999}
     #aiModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9998}
     #aiDialog{width:min(960px,96vw);height:min(82vh,920px);background:#0b1220;border-radius:16px;overflow:hidden;border:1px solid #1e2a4a;display:flex;flex-direction:column}
@@ -60,6 +64,7 @@
     #aiClose{background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer}
     .ai-body{flex:1;min-height:360px;position:relative}
     .loading{display:flex;align-items:center;justify-content:center;height:100%;color:#a5b4d6}
+
     @media (max-width:1000px){
       .grid-2{grid-template-columns:1fr}
       .features{grid-template-columns:1fr 1fr}
@@ -211,13 +216,17 @@
   </div>
 
   <script>
+    // Footer year
     document.getElementById('y').textContent = new Date().getFullYear();
 
     // ===== CONFIG =====
-    const CHAT_BASE_URL = 'https://ai-marketing-chat-git-main-ai-chat-projects-projects.vercel.app/'; // change if your chat lives on a subpath
+    const CHAT_BASE_URL = 'https://ai-marketing-chat.vercel.app/'; // ✅ your chat app URL
     const CHECK_ACCESS_ENDPOINT = '/api/check-access';
 
-    // ===== Router for clicks =====
+    // ===== Helpers =====
+    function isExternal(url){ return /^(https?:|mailto:|tel:)/i.test(url); }
+
+    // ===== Checkout =====
     async function startCheckout(plan){
       try{
         const r = await fetch('/api/create-checkout', {
@@ -225,37 +234,65 @@
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ plan })
         });
-        const { url, error } = await r.json();
-        if (url) location.href = url;
-        else alert('Checkout error: ' + (error || 'unknown'));
-      }catch(e){ alert('Network error'); }
-    }
-    async function startTrial(){ return startCheckout('pro'); }
 
-    function handleActionClick(e){
-      const el = e.currentTarget;
+        if (!r.ok) {
+          const text = await r.text().catch(()=> '');
+          alert(`Checkout error (${r.status}): ${text || 'Server error'}`);
+          return;
+        }
+        const data = await r.json().catch(()=> ({}));
+        if (data.url) location.href = data.url;
+        else alert('Checkout error: ' + (data.error || 'Unknown response'));
+      }catch(e){
+        console.error('startCheckout error', e);
+        alert('Network error. Open Console for details.');
+      }
+    }
+    async function startTrial(){ return startCheckout('pro'); } // 7-day trial is applied server-side for 'pro'
+
+    // ===== Global event delegation for .js-action =====
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('a.js-action, button.js-action');
+      if (!el) return; // let normal links work as usual
+      e.preventDefault();
+
       const action = el.dataset.action;
       const plan   = el.dataset.plan;
       const url    = el.dataset.url;
       const smooth = el.dataset.smooth === 'true';
-      if (!action) return;
+      const target = el.dataset.target || '_self';
 
-      e.preventDefault();
-      switch(action){
-        case 'trial': return startTrial();
-        case 'checkout': return plan ? startCheckout(plan) : null;
-        case 'link':
-          if (!url) return; return (location.href = url);
-        case 'scroll':
-          if (!url) return;
-          const id = url.startsWith('#') ? url : '#' + url;
-          const node = document.querySelector(id);
-          if (node) node.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
-          return;
+      try{
+        switch(action){
+          case 'trial':
+            return startTrial();
+
+          case 'checkout':
+            if (!plan) return alert('Missing plan');
+            return startCheckout(plan);
+
+          case 'link':
+            if (!url) return alert('Missing data-url on link action');
+            if (isExternal(url)) window.open(url, target);
+            else target === '_blank' ? window.open(url, '_blank') : (location.href = url);
+            return;
+
+          case 'scroll': {
+            if (!url) return alert('Missing data-url on scroll action');
+            const id = url.startsWith('#') ? url : '#' + url;
+            const node = document.querySelector(id);
+            if (node) node.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+            else url.startsWith('#') ? console.warn('Anchor not found:', id) : (location.href = url);
+            return;
+          }
+
+          default:
+            console.warn('Unknown action:', action, el);
+        }
+      }catch(err){
+        console.error('handleActionClick error:', err);
+        alert('Click handler error. See Console for details.');
       }
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.js-action').forEach(btn => btn.addEventListener('click', handleActionClick));
     });
 
     // ===== Chat bubble / modal with access check =====
@@ -324,21 +361,19 @@
       }
       function openChat(){
         modal.style.display = 'flex';
-        close.focus({preventScroll:true});
         initChatBody();
       }
-      function closeChat(){
-        modal.style.display = 'none';
-      }
+      function closeChat(){ modal.style.display = 'none'; }
+
       bubble.addEventListener('click', openChat);
       close.addEventListener('click', closeChat);
       modal.addEventListener('click', e => { if (e.target === modal) closeChat(); });
       window.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display === 'flex') closeChat(); });
     })();
+
+    console.log('NovaMark JS loaded ✅');
   </script>
 
   <noscript>Please enable JavaScript to use the AI assistant.</noscript>
 </body>
 </html>
-
-
