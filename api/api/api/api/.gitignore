@@ -1,4 +1,27 @@
-node_modules
+# Dependencies & builds
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Env & local config (ΠΟΤΕ μην κάνεις commit κλειδιά)
 .env
-.vercel
+.env.*
+.vercel/
+
+# OS / editor junk
 .DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Tests & caches
+coverage/
+.cache/
